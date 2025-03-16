@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from starlette.background import BackgroundTasks
 import shutil
 import os
+import subprocess
 
 app = FastAPI()
 
@@ -11,16 +12,30 @@ async def convert_pdf(background_tasks : BackgroundTasks, file: UploadFile = Fil
     # Temporärer Pfad zum Speichern der hochgeladenen Datei
     #temp_file = f"{file.filename}"
     print(f'Content type of file: {file.content_type}')
+    inputFileName = file.filename
+    outputFileName = "pdfa_" + file.filename
+    print("Input file name:" + inputFileName)
+    print("Output file name: " + outputFileName)
     
     # Speichern der hochgeladenen Datei
-    with open("/tmp/" + file.filename, "wb") as buffer:
+    with open("/tmp/" + inputFileName, "wb") as buffer:
        shutil.copyfileobj(file.file, buffer)
-    print(file.filename)
+
+
+    subprocess.run(["gs", 
+                    "-dPDFA", 
+                    "-dBATCH", 
+                    "-dNOPAUSE", 
+                    "-sColorConversionStrategy=UseDeviceIndependentColor",
+                    "-sDEVICE=pdfwrite", 
+                    "-dPDFACompatibilityPolicy=1",
+                    "-sOutputFile=","/tmp/" + outputFileName, inputFileName])
        
     # Rückgabe der Datei als Response
     #headers = {'Content-Disposition': 'inline; filename="out.pdf"'}
-    background_tasks.add_task(remove_file, "/tmp/" + file.filename)
-    return FileResponse("/tmp/" + file.filename, media_type="application/pdf", filename=file.filename)
+    background_tasks.add_task(remove_file, "/tmp/" + inputFileName)
+    background_tasks.add_task(remove_file, "/tmp/" + outputFileName)
+    return FileResponse("/tmp/" + outputFileName, media_type="application/pdf", filename=outputFileName)
         
 
 
