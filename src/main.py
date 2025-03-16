@@ -21,15 +21,19 @@ async def convert_pdf(background_tasks : BackgroundTasks, file: UploadFile = Fil
     with open("/tmp/" + inputFileName, "wb") as buffer:
        shutil.copyfileobj(file.file, buffer)
 
+    command = "gs " 
+    command += "-dPDFA " 
+    command += "-dBATCH "
+    command += "-dNOPAUSE "
+    command += "-sColorConversionStrategy=UseDeviceIndependentColor "
+    command += "-sDEVICE=pdfwrite "
+    command += "-dPDFACompatibilityPolicy=2 "
+    command += "-sOutputFile=/tmp/" + outputFileName + " "
+    command += "/tmp/" + inputFileName
 
-    subprocess.run(["gs", 
-                    "-dPDFA", 
-                    "-dBATCH", 
-                    "-dNOPAUSE", 
-                    "-sColorConversionStrategy=UseDeviceIndependentColor",
-                    "-sDEVICE=pdfwrite", 
-                    "-dPDFACompatibilityPolicy=1",
-                    "-sOutputFile=","/tmp/" + outputFileName, inputFileName])
+    print("Ghostsciprt command: " + command)
+
+    subprocess.run(command, shell=True)
        
     # Rückgabe der Datei als Response
     #headers = {'Content-Disposition': 'inline; filename="out.pdf"'}
